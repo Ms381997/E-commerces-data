@@ -1,0 +1,428 @@
+Data Details
+https://www.kaggle.com/carrie1/ecommerce-data Company - UK-based and registered non-store online retail Products for selling - Mainly all-occasion gifts Customers - Most are wholesalers (local or international) Transactions Period - 1st Dec 2010 - 9th Dec 2011 (One year)
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns 
+
+import warnings
+# current version of seaborn generates a bunch of warnings that we'll ignore
+warnings.filterwarnings('ignore')
+sns.set_style('whitegrid')
+
+import missingno as msno # missing data visualization module for Python
+
+import gc
+import datetime
+
+%matplotlib inline
+color = sns.color_palette()
+pd.set_option('display.max_rows', 10000)
+pd.set_option('display.max_columns', 100)
+pd.set_option('display.max_rows', 10000)
+pd.set_option('display.max_columns', 100)
+# specify encoding to deal with different formats
+df = pd.read_csv('data.csv', encoding = 'ISO-8859-1')
+# specify encoding to deal with different formats
+df = pd.read_csv('data.csv', encoding = 'ISO-8859-1')
+df.head()
+df.head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+0	536365	2010-12-01 08:26:00	201012	12	3	8	85123A	white hanging heart t-light holder	6	2.55	15.30	17850	United Kingdom
+1	536365	2010-12-01 08:26:00	201012	12	3	8	71053	white metal lantern	6	3.39	20.34	17850	United Kingdom
+2	536365	2010-12-01 08:26:00	201012	12	3	8	84406B	cream cupid hearts coat hanger	8	2.75	22.00	17850	United Kingdom
+3	536365	2010-12-01 08:26:00	201012	12	3	8	84029G	knitted union flag hot water bottle	6	3.39	20.34	17850	United Kingdom
+4	536365	2010-12-01 08:26:00	201012	12	3	8	84029E	red woolly hottie white heart.	6	3.39	20.34	17850	United Kingdom
+# change the column names
+df.rename(index=str, columns={'InvoiceNo': 'invoice_num',
+                              'StockCode' : 'stock_code',
+                              'Description' : 'description',
+                              'Quantity' : 'quantity',
+                              'InvoiceDate' : 'invoice_date',
+                              'UnitPrice' : 'unit_price',
+                              'CustomerID' : 'cust_id',
+                              'Country' : 'country'}, inplace=True)
+df.head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+0	536365	2010-12-01 08:26:00	201012	12	3	8	85123A	white hanging heart t-light holder	6	2.55	15.30	17850	United Kingdom
+1	536365	2010-12-01 08:26:00	201012	12	3	8	71053	white metal lantern	6	3.39	20.34	17850	United Kingdom
+2	536365	2010-12-01 08:26:00	201012	12	3	8	84406B	cream cupid hearts coat hanger	8	2.75	22.00	17850	United Kingdom
+3	536365	2010-12-01 08:26:00	201012	12	3	8	84029G	knitted union flag hot water bottle	6	3.39	20.34	17850	United Kingdom
+4	536365	2010-12-01 08:26:00	201012	12	3	8	84029E	red woolly hottie white heart.	6	3.39	20.34	17850	United Kingdom
+Data Cleaning
+df.info()
+<class 'pandas.core.frame.DataFrame'>
+Index: 397924 entries, 0 to 397923
+Data columns (total 13 columns):
+ #   Column        Non-Null Count   Dtype  
+---  ------        --------------   -----  
+ 0   invoice_num   397924 non-null  int64  
+ 1   invoice_date  397924 non-null  object 
+ 2   year_month    397924 non-null  int64  
+ 3   month         397924 non-null  int64  
+ 4   day           397924 non-null  int64  
+ 5   hour          397924 non-null  int64  
+ 6   stock_code    397924 non-null  object 
+ 7   description   397924 non-null  object 
+ 8   quantity      397924 non-null  int64  
+ 9   unit_price    397924 non-null  float64
+ 10  amount_spent  397924 non-null  float64
+ 11  cust_id       397924 non-null  int64  
+ 12  country       397924 non-null  object 
+dtypes: float64(2), int64(7), object(4)
+memory usage: 42.5+ MB
+Check missing values for each column
+# check missing values for each column 
+df.isnull().sum().sort_values(ascending=False)
+invoice_num     0
+invoice_date    0
+year_month      0
+month           0
+day             0
+hour            0
+stock_code      0
+description     0
+quantity        0
+unit_price      0
+amount_spent    0
+cust_id         0
+country         0
+dtype: int64
+# check out the rows with missing values
+df[df.isnull().any(axis=1)].head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+# change the invoice_date format - String to Timestamp format
+df['invoice_date'] = pd.to_datetime(df.invoice_date, format='%Y/%m/%d %H:%M')
+# change description - UPPER case to LOWER case
+df['description'] = df.description.str.lower()
+df.head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+0	536365	2010-12-01 08:26:00	201012	12	3	8	85123A	white hanging heart t-light holder	6	2.55	15.30	17850	United Kingdom
+1	536365	2010-12-01 08:26:00	201012	12	3	8	71053	white metal lantern	6	3.39	20.34	17850	United Kingdom
+2	536365	2010-12-01 08:26:00	201012	12	3	8	84406B	cream cupid hearts coat hanger	8	2.75	22.00	17850	United Kingdom
+3	536365	2010-12-01 08:26:00	201012	12	3	8	84029G	knitted union flag hot water bottle	6	3.39	20.34	17850	United Kingdom
+4	536365	2010-12-01 08:26:00	201012	12	3	8	84029E	red woolly hottie white heart.	6	3.39	20.34	17850	United Kingdom
+Remove rows with missing values
+# df_new without missing values
+df_new = df.dropna()
+# check missing values for each column 
+df_new.isnull().sum().sort_values(ascending=False)
+invoice_num     0
+invoice_date    0
+year_month      0
+month           0
+day             0
+hour            0
+stock_code      0
+description     0
+quantity        0
+unit_price      0
+amount_spent    0
+cust_id         0
+country         0
+dtype: int64
+df_new.info()
+<class 'pandas.core.frame.DataFrame'>
+Index: 397924 entries, 0 to 397923
+Data columns (total 13 columns):
+ #   Column        Non-Null Count   Dtype         
+---  ------        --------------   -----         
+ 0   invoice_num   397924 non-null  int64         
+ 1   invoice_date  397924 non-null  datetime64[ns]
+ 2   year_month    397924 non-null  int64         
+ 3   month         397924 non-null  int64         
+ 4   day           397924 non-null  int64         
+ 5   hour          397924 non-null  int64         
+ 6   stock_code    397924 non-null  object        
+ 7   description   397924 non-null  object        
+ 8   quantity      397924 non-null  int64         
+ 9   unit_price    397924 non-null  float64       
+ 10  amount_spent  397924 non-null  float64       
+ 11  cust_id       397924 non-null  int64         
+ 12  country       397924 non-null  object        
+dtypes: datetime64[ns](1), float64(2), int64(7), object(3)
+memory usage: 42.5+ MB
+# change columns type - String to Int type 
+df_new['cust_id'] = df_new['cust_id'].astype('int64')
+df_new.head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+0	536365	2010-12-01 08:26:00	201012	12	3	8	85123A	white hanging heart t-light holder	6	2.55	15.30	17850	United Kingdom
+1	536365	2010-12-01 08:26:00	201012	12	3	8	71053	white metal lantern	6	3.39	20.34	17850	United Kingdom
+2	536365	2010-12-01 08:26:00	201012	12	3	8	84406B	cream cupid hearts coat hanger	8	2.75	22.00	17850	United Kingdom
+3	536365	2010-12-01 08:26:00	201012	12	3	8	84029G	knitted union flag hot water bottle	6	3.39	20.34	17850	United Kingdom
+4	536365	2010-12-01 08:26:00	201012	12	3	8	84029E	red woolly hottie white heart.	6	3.39	20.34	17850	United Kingdom
+df_new.info()
+<class 'pandas.core.frame.DataFrame'>
+Index: 397924 entries, 0 to 397923
+Data columns (total 13 columns):
+ #   Column        Non-Null Count   Dtype         
+---  ------        --------------   -----         
+ 0   invoice_num   397924 non-null  int64         
+ 1   invoice_date  397924 non-null  datetime64[ns]
+ 2   year_month    397924 non-null  int64         
+ 3   month         397924 non-null  int64         
+ 4   day           397924 non-null  int64         
+ 5   hour          397924 non-null  int64         
+ 6   stock_code    397924 non-null  object        
+ 7   description   397924 non-null  object        
+ 8   quantity      397924 non-null  int64         
+ 9   unit_price    397924 non-null  float64       
+ 10  amount_spent  397924 non-null  float64       
+ 11  cust_id       397924 non-null  int64         
+ 12  country       397924 non-null  object        
+dtypes: datetime64[ns](1), float64(2), int64(7), object(3)
+memory usage: 42.5+ MB
+df_new.describe().round(2)
+invoice_num	year_month	month	day	hour	quantity	unit_price	amount_spent	cust_id
+count	397924.00	397924.00	397924.00	397924.00	397924.00	397924.00	397924.00	397924.00	397924.00
+mean	560617.13	201101.04	7.61	3.61	12.73	13.02	3.12	22.39	15294.32
+std	13106.17	23.84	3.42	1.93	2.27	180.42	22.10	309.06	1713.17
+min	536365.00	201012.00	1.00	1.00	6.00	1.00	0.00	0.00	12346.00
+25%	549234.00	201104.00	5.00	2.00	11.00	2.00	1.25	4.68	13969.00
+50%	561893.00	201107.00	8.00	3.00	13.00	6.00	1.95	11.80	15159.00
+75%	572090.00	201110.00	11.00	5.00	14.00	12.00	3.75	19.80	16795.00
+max	581587.00	201112.00	12.00	7.00	20.00	80995.00	8142.75	168469.60	18287.00
+Remove Quantity with negative values
+df_new = df_new[df_new.quantity > 0]
+df_new.describe().round(2)
+invoice_num	year_month	month	day	hour	quantity	unit_price	amount_spent	cust_id
+count	397924.00	397924.00	397924.00	397924.00	397924.00	397924.00	397924.00	397924.00	397924.00
+mean	560617.13	201101.04	7.61	3.61	12.73	13.02	3.12	22.39	15294.32
+std	13106.17	23.84	3.42	1.93	2.27	180.42	22.10	309.06	1713.17
+min	536365.00	201012.00	1.00	1.00	6.00	1.00	0.00	0.00	12346.00
+25%	549234.00	201104.00	5.00	2.00	11.00	2.00	1.25	4.68	13969.00
+50%	561893.00	201107.00	8.00	3.00	13.00	6.00	1.95	11.80	15159.00
+75%	572090.00	201110.00	11.00	5.00	14.00	12.00	3.75	19.80	16795.00
+max	581587.00	201112.00	12.00	7.00	20.00	80995.00	8142.75	168469.60	18287.00
+Add the column - amount_spent
+df_new['amount_spent'] = df_new['quantity'] * df_new['unit_price']
+# rearrange all the columns for easy reference
+df_new = df_new[['invoice_num','invoice_date','stock_code','description','quantity','unit_price','amount_spent','cust_id','country']]
+Add the columns - Month, Day and Hour for the invoice
+df_new.insert(loc=2, column='year_month', value=df_new['invoice_date'].map(lambda x: 100*x.year + x.month))
+df_new.insert(loc=3, column='month', value=df_new.invoice_date.dt.month)
+# +1 to make Monday=1.....until Sunday=7
+df_new.insert(loc=4, column='day', value=(df_new.invoice_date.dt.dayofweek)+1)
+df_new.insert(loc=5, column='hour', value=df_new.invoice_date.dt.hour)
+df_new.head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+0	536365	2010-12-01 08:26:00	201012	12	3	8	85123A	white hanging heart t-light holder	6	2.55	15.30	17850	United Kingdom
+1	536365	2010-12-01 08:26:00	201012	12	3	8	71053	white metal lantern	6	3.39	20.34	17850	United Kingdom
+2	536365	2010-12-01 08:26:00	201012	12	3	8	84406B	cream cupid hearts coat hanger	8	2.75	22.00	17850	United Kingdom
+3	536365	2010-12-01 08:26:00	201012	12	3	8	84029G	knitted union flag hot water bottle	6	3.39	20.34	17850	United Kingdom
+4	536365	2010-12-01 08:26:00	201012	12	3	8	84029E	red woolly hottie white heart.	6	3.39	20.34	17850	United Kingdom
+Exploratory Data Analysis (EDA)
+How many orders made by the customers?
+df_new.groupby(by=['cust_id','country'], as_index=False)['invoice_num'].count().head()
+cust_id	country	invoice_num
+0	12346	United Kingdom	1
+1	12347	Iceland	182
+2	12348	Finland	31
+3	12349	Italy	73
+4	12350	Norway	17
+orders = df_new.groupby(by=['cust_id','country'], as_index=False)['invoice_num'].count()
+​
+plt.subplots(figsize=(15,6))
+plt.plot(orders.cust_id, orders.invoice_num)
+plt.xlabel('Customers ID')
+plt.ylabel('Number of Orders')
+plt.title('Number of Orders for different Customers')
+plt.show()
+
+Check TOP 5 most number of orders
+print('The TOP 5 customers with most number of orders...')
+orders.sort_values(by='invoice_num', ascending=False).head()
+The TOP 5 customers with most number of orders...
+cust_id	country	invoice_num
+4019	17841	United Kingdom	7847
+1888	14911	EIRE	5677
+1298	14096	United Kingdom	5111
+334	12748	United Kingdom	4596
+1670	14606	United Kingdom	2700
+How much money spent by the customers?
+money_spent = df_new.groupby(by=['cust_id','country'], as_index=False)['amount_spent'].sum()
+​
+plt.subplots(figsize=(15,6))
+plt.plot(money_spent.cust_id, money_spent.amount_spent)
+plt.xlabel('Customers ID')
+plt.ylabel('Money spent (Dollar)')
+plt.title('Money Spent for different Customers')
+plt.show()
+
+Check TOP 5 highest money spent
+print('The TOP 5 customers with highest money spent...')
+money_spent.sort_values(by='amount_spent', ascending=False).head()
+The TOP 5 customers with highest money spent...
+cust_id	country	amount_spent
+1698	14646	Netherlands	280206.02
+4210	18102	United Kingdom	259657.30
+3737	17450	United Kingdom	194550.79
+3017	16446	United Kingdom	168472.50
+1888	14911	EIRE	143825.06
+How many orders (per month)?
+# color available
+sns.palplot(color)
+
+df_new.head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+0	536365	2010-12-01 08:26:00	201012	12	3	8	85123A	white hanging heart t-light holder	6	2.55	15.30	17850	United Kingdom
+1	536365	2010-12-01 08:26:00	201012	12	3	8	71053	white metal lantern	6	3.39	20.34	17850	United Kingdom
+2	536365	2010-12-01 08:26:00	201012	12	3	8	84406B	cream cupid hearts coat hanger	8	2.75	22.00	17850	United Kingdom
+3	536365	2010-12-01 08:26:00	201012	12	3	8	84029G	knitted union flag hot water bottle	6	3.39	20.34	17850	United Kingdom
+4	536365	2010-12-01 08:26:00	201012	12	3	8	84029E	red woolly hottie white heart.	6	3.39	20.34	17850	United Kingdom
+ax = df_new.groupby('invoice_num')['year_month'].unique().value_counts().sort_index().plot(kind='bar',color=color[0],figsize=(15,6))
+ax.set_xlabel('Month',fontsize=15)
+ax.set_ylabel('Number of Orders',fontsize=15)
+ax.set_title('Number of orders for different Months (1st Dec 2010 - 9th Dec 2011)',fontsize=15)
+ax.set_xticklabels(('Dec_10','Jan_11','Feb_11','Mar_11','Apr_11','May_11','Jun_11','July_11','Aug_11','Sep_11','Oct_11','Nov_11','Dec_11'), rotation='horizontal', fontsize=13)
+plt.show()
+
+How many orders (per day)?
+df_new.groupby('invoice_num')['day'].unique().value_counts().sort_index()
+[1]    2863
+[2]    3185
+[3]    3455
+[4]    4033
+[5]    2831
+[7]    2169
+Name: day, dtype: int64
+ax = df_new.groupby('invoice_num')['day'].unique().value_counts().sort_index().plot(kind='bar',color=color[0],figsize=(15,6))
+ax.set_xlabel('Day',fontsize=15)
+ax.set_ylabel('Number of Orders',fontsize=15)
+ax.set_title('Number of orders for different Days',fontsize=15)
+ax.set_xticklabels(('Mon','Tue','Wed','Thur','Fri','Sun'), rotation='horizontal', fontsize=15)
+plt.show()
+
+How many orders (per hour)?
+df_new.groupby('invoice_num')['hour'].unique().value_counts()
+[12]        3129
+[13]        2637
+[11]        2276
+[14]        2275
+[10]        2226
+[15]        2038
+[9]         1394
+[16]        1100
+[8]          555
+[17]         544
+[18]         169
+[19]         144
+[7]           29
+[20]          18
+[11, 12]       1
+[6]            1
+Name: hour, dtype: int64
+ax = df_new.groupby('invoice_num')['hour'].unique().value_counts().plot(kind='bar',color=color[0],figsize=(15,6))
+ax.set_xlabel('Hour',fontsize=15)
+ax.set_ylabel('Number of Orders',fontsize=15)
+ax.set_title('Number of orders for different Hours',fontsize=15)
+plt.show()
+
+Discover patterns for Unit Price
+df_new.unit_price.describe()
+count    397924.000000
+mean          3.116174
+std          22.096788
+min           0.000000
+25%           1.250000
+50%           1.950000
+75%           3.750000
+max        8142.750000
+Name: unit_price, dtype: float64
+We see that there are unit price = 0 (FREE items)
+
+There are some free items given to customers from time to time.
+
+# check the distribution of unit price
+plt.subplots(figsize=(12,6))
+sns.boxplot(df_new.unit_price)
+plt.show()
+
+df_free = df_new[df_new.unit_price == 0]
+df_free.head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+6914	537197	2010-12-05 14:02:00	201012	12	7	14	22841	round cake tin vintage green	1	0.0	0.0	12647	Germany
+22539	539263	2010-12-16 14:36:00	201012	12	4	14	22580	advent calendar gingham sack	4	0.0	0.0	16560	United Kingdom
+25379	539722	2010-12-21 13:45:00	201012	12	2	13	22423	regency cakestand 3 tier	10	0.0	0.0	14911	EIRE
+29080	540372	2011-01-06 16:41:00	201101	1	4	16	22090	paper bunting retrospot	24	0.0	0.0	13081	United Kingdom
+29082	540372	2011-01-06 16:41:00	201101	1	4	16	22553	plasters in tin skulls	24	0.0	0.0	13081	United Kingdom
+df_free.year_month.value_counts().sort_index()
+201012     3
+201101     3
+201102     1
+201103     2
+201104     2
+201105     2
+201107     2
+201108     6
+201109     2
+201110     3
+201111    14
+Name: year_month, dtype: int64
+ax = df_free.year_month.value_counts().sort_index().plot(kind='bar',figsize=(12,6), color=color[0])
+ax.set_xlabel('Month',fontsize=15)
+ax.set_ylabel('Frequency',fontsize=15)
+ax.set_title('Frequency for different Months (Dec 2010 - Dec 2011)',fontsize=15)
+ax.set_xticklabels(('Dec_10','Jan_11','Feb_11','Mar_11','Apr_11','May_11','July_11','Aug_11','Sep_11','Oct_11','Nov_11'), rotation='horizontal', fontsize=13)
+plt.show()
+
+df_new.head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+0	536365	2010-12-01 08:26:00	201012	12	3	8	85123A	white hanging heart t-light holder	6	2.55	15.30	17850	United Kingdom
+1	536365	2010-12-01 08:26:00	201012	12	3	8	71053	white metal lantern	6	3.39	20.34	17850	United Kingdom
+2	536365	2010-12-01 08:26:00	201012	12	3	8	84406B	cream cupid hearts coat hanger	8	2.75	22.00	17850	United Kingdom
+3	536365	2010-12-01 08:26:00	201012	12	3	8	84029G	knitted union flag hot water bottle	6	3.39	20.34	17850	United Kingdom
+4	536365	2010-12-01 08:26:00	201012	12	3	8	84029E	red woolly hottie white heart.	6	3.39	20.34	17850	United Kingdom
+How many orders for each country?
+group_country_orders = df_new.groupby('country')['invoice_num'].count().sort_values()
+# del group_country_orders['United Kingdom']
+​
+# plot number of unique customers in each country (with UK)
+plt.subplots(figsize=(15,8))
+group_country_orders.plot(kind='barh', fontsize=12, color=color[0])
+plt.xlabel('Number of Orders', fontsize=12)
+plt.ylabel('Country', fontsize=12)
+plt.title('Number of Orders for different Countries', fontsize=12)
+plt.show()
+
+group_country_orders = df_new.groupby('country')['invoice_num'].count().sort_values()
+del group_country_orders['United Kingdom']
+​
+# plot number of unique customers in each country (without UK)
+plt.subplots(figsize=(15,8))
+group_country_orders.plot(kind='barh', fontsize=12, color=color[0])
+plt.xlabel('Number of Orders', fontsize=12)
+plt.ylabel('Country', fontsize=12)
+plt.title('Number of Orders for different Countries', fontsize=12)
+plt.show()
+
+How much money spent by each country?
+group_country_amount_spent = df_new.groupby('country')['amount_spent'].sum().sort_values()
+# del group_country_orders['United Kingdom']
+​
+# plot number of unique customers in each country (with UK)
+plt.subplots(figsize=(15,8))
+group_country_amount_spent.plot(kind='barh', fontsize=12, color=color[0])
+plt.xlabel('Money Spent (Dollar)', fontsize=12)
+plt.ylabel('Country', fontsize=12)
+plt.title('Money Spent by different Countries', fontsize=12)
+plt.show()
+
+group_country_amount_spent = df_new.groupby('country')['amount_spent'].sum().sort_values()
+del group_country_amount_spent['United Kingdom']
+​
+# plot number of unique customers in each country (without UK)
+plt.subplots(figsize=(15,8))
+group_country_amount_spent.plot(kind='barh', fontsize=12, color=color[0])
+plt.xlabel('Money Spent (Dollar)', fontsize=12)
+plt.ylabel('Country', fontsize=12)
+plt.title('Money Spent by different Countries', fontsize=12)
+plt.show()
+
+df.head()
+invoice_num	invoice_date	year_month	month	day	hour	stock_code	description	quantity	unit_price	amount_spent	cust_id	country
+0	536365	2010-12-01 08:26:00	201012	12	3	8	85123A	white hanging heart t-light holder	6	2.55	15.30	17850	United Kingdom
+1	536365	2010-12-01 08:26:00	201012	12	3	8	71053	white metal lantern	6	3.39	20.34	17850	United Kingdom
+2	536365	2010-12-01 08:26:00	201012	12	3	8	84406B	cream cupid hearts coat hanger	8	2.75	22.00	17850	United Kingdom
+3	536365	2010-12-01 08:26:00	201012	12	3	8	84029G	knitted union flag hot water bottle	6	3.39	20.34	17850	United Kingdom
+4	536365	2010-12-01 08:26:00	201012	12	3	8	84029E	red woolly hottie white heart.	6	3.39	20.34	17850	United Kingdom
